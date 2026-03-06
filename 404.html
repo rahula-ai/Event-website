@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Dharmasthala Events</title>
+  <!-- GitHub Pages SPA fix: redirect 404s back to index.html -->
+  <script>
+    // Preserve the path in sessionStorage, then redirect to index
+    sessionStorage.setItem('ghpages_redirect', location.href);
+    location.replace(location.origin + location.pathname.split('/').slice(0, 2).join('/'));
+  </script>
+</head>
+<body></body>
+</html>

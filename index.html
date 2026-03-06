@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dharmasthala Events – Sacred Celebrations & Cultural Programs</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/lucide@0.395.0/dist/umd/lucide.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sky:       #38BDF8;
+      --sky-dark:  #0EA5E9;
+      --sky-pale:  #E0F2FE;
+      --sky-ultra: #F0F9FF;
+      --stone:     #FAFAF9;
+      --stone-100: #F5F5F4;
+      --stone-200: #E7E5E4;
+      --stone-400: #A8A29E;
+      --stone-600: #57534E;
+      --stone-800: #292524;
+      --gold:      #D4A853;
+      --gold-light:#FDF3DC;
+      --radius:    16px;
+      --shadow-sm: 0 2px 8px rgba(56,189,248,0.08);
+      --shadow:    0 8px 32px rgba(56,189,248,0.12);
+      --shadow-lg: 0 24px 64px rgba(56,189,248,0.16);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Manrope', sans-serif;
+      background: var(--stone);
+      color: var(--stone-800);
+      overflow-x: hidden;
+    }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--stone-100); }
+    ::-webkit-scrollbar-thumb { background: var(--sky); border-radius: 99px; }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(250,250,249,0.82);
+      backdrop-filter: blur(16px) saturate(180%);
+      border-bottom: 1px solid rgba(56,189,248,0.12);
+      transition: box-shadow 0.3s;
+    }
+    nav.scrolled { box-shadow: var(--shadow); }
+    .nav-inner {
+      max-width: 1200px; margin: 0 auto;
+      padding: 0 24px;
+      height: 72px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 12px;
+      text-decoration: none; color: var(--stone-800);
+    }
+    .nav-logo-icon {
+      width: 42px; height: 42px;
+      background: linear-gradient(135deg, var(--sky), var(--sky-dark));
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .nav-logo-text {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.15rem;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+    .nav-logo-sub { font-size: 0.72rem; color: var(--stone-400); font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; }
+    .nav-links { display: flex; align-items: center; gap: 8px; }
+    .nav-link {
+      padding: 8px 16px; border-radius: 8px;
+      font-size: 0.875rem; font-weight: 500;
+      color: var(--stone-600); text-decoration: none;
+      transition: all 0.2s;
+      background: transparent; border: none; cursor: pointer;
+    }
+    .nav-link:hover { color: var(--sky-dark); background: var(--sky-pale); }
+    .nav-cta {
+      padding: 10px 22px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--sky), var(--sky-dark));
+      color: white; font-weight: 600; font-size: 0.875rem;
+      border: none; cursor: pointer; text-decoration: none;
+      box-shadow: 0 4px 16px rgba(14,165,233,0.3);
+      transition: all 0.2s;
+    }
+    .nav-cta:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(14,165,233,0.4); }
+    .nav-mobile-btn {
+      display: none; background: none; border: none; cursor: pointer;
+      color: var(--stone-600);
+    }
+    .mobile-menu {
+      display: none;
+      flex-direction: column; gap: 4px;
+      padding: 16px 24px;
+      border-top: 1px solid var(--stone-200);
+      background: rgba(250,250,249,0.95);
+    }
+    .mobile-menu.open { display: flex; }
+    .mobile-link {
+      padding: 12px 16px; border-radius: 8px;
+      font-size: 0.9rem; font-weight: 500;
+      color: var(--stone-600); text-decoration: none;
+      background: none; border: none; cursor: pointer; text-align: left;
+      transition: all 0.2s;
+    }
+    .mobile-link:hover { color: var(--sky-dark); background: var(--sky-pale); }
+
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .nav-mobile-btn { display: flex; }
+    }
+
+    /* ── HERO ── */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex; align-items: center;
+      padding: 120px 24px 80px;
+      overflow: hidden;
+    }
+    .hero-bg {
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 70% 40%, rgba(56,189,248,0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 50% at 10% 80%, rgba(212,168,83,0.08) 0%, transparent 50%),
+        linear-gradient(160deg, #FAFAF9 0%, #F0F9FF 50%, #FAFAF9 100%);
+    }
+    .hero-pattern {
+      position: absolute; inset: 0;
+      background-image: radial-gradient(circle, rgba(56,189,248,0.06) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+    .hero-inner {
+      position: relative;
+      max-width: 1200px; margin: 0 auto; width: 100%;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 8px 16px; border-radius: 99px;
+      background: var(--gold-light); border: 1px solid rgba(212,168,83,0.3);
+      font-size: 0.8rem; font-weight: 600; color: #92670A;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+    .hero-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.4rem, 5vw, 3.8rem);
+      font-weight: 700;
+      line-height: 1.15;
+      color: var(--stone-800);
+      margin-bottom: 24px;
+    }
+    .hero-title em {
+      font-style: italic; color: var(--sky-dark);
+      font-weight: 600;
+    }
+    .hero-desc {
+      font-size: 1.05rem; color: var(--stone-600);
+      line-height: 1.75; margin-bottom: 40px;
+      font-weight: 400;
+    }
+    .hero-actions { display: flex; gap: 16px; flex-wrap: wrap; }
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 28px; border-radius: 12px;
+      background: linear-gradient(135deg, var(--sky), var(--sky-dark));
+      color: white; font-weight: 600; font-size: 0.95rem;
+      border: none; cursor: pointer; text-decoration: none;
+      box-shadow: 0 6px 24px rgba(14,165,233,0.35);
+      transition: all 0.25s;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(14,165,233,0.45); }
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 28px; border-radius: 12px;
+      background: white; color: var(--stone-700);
+      font-weight: 600; font-size: 0.95rem;
+      border: 1.5px solid var(--stone-200); cursor: pointer; text-decoration: none;
+      transition: all 0.25s;
+    }
+    .btn-secondary:hover { border-color: var(--sky); color: var(--sky-dark); background: var(--sky-ultra); }
+    .hero-stats {
+      display: flex; gap: 32px; margin-top: 48px;
+      padding-top: 40px; border-top: 1px solid var(--stone-200);
+    }
+    .hero-stat-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 2rem; font-weight: 700; color: var(--stone-800); line-height: 1;
+    }
+    .hero-stat-num span { color: var(--sky-dark); }
+    .hero-stat-label { font-size: 0.8rem; color: var(--stone-400); font-weight: 500; margin-top: 4px; }
+
+    /* Hero right – image collage */
+    .hero-visual { position: relative; }
+    .hero-img-main {
+      width: 100%; aspect-ratio: 4/5;
+      border-radius: 24px;
+      object-fit: cover;
+      box-shadow: var(--shadow-lg);
+    }
+    .hero-img-float {
+      position: absolute;
+      width: 52%;
+      aspect-ratio: 1;
+      border-radius: 18px;
+      object-fit: cover;
+      box-shadow: var(--shadow);
+      border: 4px solid white;
+    }
+    .hero-img-float-1 { bottom: -32px; left: -32px; }
+    .hero-img-float-2 { top: -24px; right: -24px; width: 42%; aspect-ratio: 4/3; }
+    .hero-badge-float {
+      position: absolute; bottom: 48px; right: -16px;
+      background: white; border-radius: 14px;
+      padding: 14px 18px;
+      box-shadow: var(--shadow);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .hero-badge-float-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: var(--sky-pale);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .hero-badge-float-title { font-weight: 700; font-size: 0.9rem; }
+    .hero-badge-float-sub { font-size: 0.75rem; color: var(--stone-400); }
+
+    @media (max-width: 900px) {
+      .hero-inner { grid-template-columns: 1fr; gap: 48px; }
+      .hero-visual { max-width: 480px; margin: 0 auto; }
+    }
+    @media (max-width: 600px) {
+      .hero-stats { gap: 20px; }
+      .hero-stat-num { font-size: 1.5rem; }
+    }
+
+    /* ── SECTION WRAPPER ── */
+    section { padding: 96px 24px; }
+    .section-inner { max-width: 1200px; margin: 0 auto; }
+    .section-tag {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 14px; border-radius: 99px;
+      background: var(--sky-pale); border: 1px solid rgba(56,189,248,0.25);
+      font-size: 0.75rem; font-weight: 700; color: var(--sky-dark);
+      letter-spacing: 0.1em; text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+      font-weight: 700; color: var(--stone-800);
+      line-height: 1.2; margin-bottom: 16px;
+    }
+    .section-sub {
+      font-size: 1rem; color: var(--stone-400);
+      line-height: 1.7; max-width: 560px;
+    }
+    .section-header { margin-bottom: 64px; }
+    .section-header.center { text-align: center; }
+    .section-header.center .section-sub { margin: 0 auto; }
+
+    /* ── FEATURES ── */
+    .features-bg { background: var(--stone-100); }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+    .feature-card {
+      background: white; border-radius: 20px;
+      padding: 32px;
+      border: 1px solid var(--stone-200);
+      transition: all 0.3s;
+      position: relative; overflow: hidden;
+    }
+    .feature-card::before {
+      content: ''; position: absolute;
+      top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--sky), var(--sky-dark));
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .feature-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-lg); border-color: transparent; }
+    .feature-card:hover::before { opacity: 1; }
+    .feature-icon {
+      width: 54px; height: 54px; border-radius: 14px;
+      background: var(--sky-pale);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 20px;
+    }
+    .feature-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.15rem; font-weight: 600;
+      color: var(--stone-800); margin-bottom: 10px;
+    }
+    .feature-desc { font-size: 0.9rem; color: var(--stone-600); line-height: 1.65; }
+
+    /* ── EVENTS ── */
+    .events-filter {
+      display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 48px;
+    }
+    .filter-btn {
+      padding: 8px 20px; border-radius: 99px;
+      font-size: 0.85rem; font-weight: 600;
+      border: 1.5px solid var(--stone-200);
+      background: white; color: var(--stone-600);
+      cursor: pointer; transition: all 0.2s;
+    }
+    .filter-btn.active, .filter-btn:hover {
+      background: var(--sky); border-color: var(--sky);
+      color: white;
+    }
+    .events-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 28px;
+    }
+    .event-card {
+      background: white; border-radius: 20px;
+      overflow: hidden; border: 1px solid var(--stone-200);
+      transition: all 0.3s; display: flex; flex-direction: column;
+    }
+    .event-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-lg); border-color: transparent; }
+    .event-card-img { position: relative; height: 210px; overflow: hidden; }
+    .event-card-img img {
+      width: 100%; height: 100%; object-fit: cover;
+      transition: transform 0.5s;
+    }
+    .event-card:hover .event-card-img img { transform: scale(1.05); }
+    .event-category {
+      position: absolute; top: 14px; left: 14px;
+      background: white; border-radius: 8px;
+      padding: 5px 12px;
+      font-size: 0.75rem; font-weight: 700;
+      color: var(--sky-dark); letter-spacing: 0.05em;
+    }
+    .event-date-badge {
+      position: absolute; top: 14px; right: 14px;
+      background: var(--gold); border-radius: 10px;
+      padding: 6px 10px; text-align: center;
+      color: white; min-width: 48px;
+    }
+    .event-date-day { font-size: 1.3rem; font-weight: 700; line-height: 1; }
+    .event-date-mon { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+    .event-card-body { padding: 24px; flex: 1; display: flex; flex-direction: column; }
+    .event-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.15rem; font-weight: 600;
+      color: var(--stone-800); margin-bottom: 10px; line-height: 1.35;
+    }
+    .event-meta { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+    .event-meta-row {
+      display: flex; align-items: center; gap: 7px;
+      font-size: 0.82rem; color: var(--stone-400); font-weight: 500;
+    }
+    .event-desc { font-size: 0.88rem; color: var(--stone-600); line-height: 1.6; margin-bottom: 20px; flex: 1; }
+    .event-footer {
+      display: flex; align-items: center; justify-content: space-between;
+      padding-top: 16px; border-top: 1px solid var(--stone-100);
+    }
+    .event-spots {
+      font-size: 0.8rem; font-weight: 600;
+      color: #16A34A; background: #F0FDF4;
+      padding: 4px 10px; border-radius: 6px;
+    }
+    .event-spots.limited { color: #D97706; background: #FFFBEB; }
+    .event-spots.full { color: #DC2626; background: #FEF2F2; }
+    .btn-register {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 9px 18px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--sky), var(--sky-dark));
+      color: white; font-size: 0.82rem; font-weight: 600;
+      border: none; cursor: pointer;
+      box-shadow: 0 4px 12px rgba(14,165,233,0.25);
+      transition: all 0.2s;
+    }
+    .btn-register:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(14,165,233,0.35); }
+
+    /* ── NEWSLETTER ── */
+    .newsletter-section { background: var(--sky-ultra); }
+    .newsletter-card {
+      background: linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%);
+      border-radius: 28px; padding: 64px;
+      text-align: center; position: relative; overflow: hidden;
+    }
+    .newsletter-card::before {
+      content: ''; position: absolute; inset: 0;
+      background:
+        radial-gradient(circle at 20% 50%, rgba(255,255,255,0.12) 0%, transparent 40%),
+        radial-gradient(circle at 80% 20%, rgba(255,255,255,0.08) 0%, transparent 40%);
+      pointer-events: none;
+    }
+    .newsletter-card > * { position: relative; }
+    .newsletter-icon {
+      width: 72px; height: 72px; border-radius: 20px;
+      background: rgba(255,255,255,0.2);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 24px;
+    }
+    .newsletter-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 2rem; font-weight: 700;
+      color: white; margin-bottom: 12px;
+    }
+    .newsletter-sub { font-size: 1rem; color: rgba(255,255,255,0.8); margin-bottom: 36px; max-width: 440px; margin-left: auto; margin-right: auto; }
+    .newsletter-form { display: flex; gap: 12px; max-width: 500px; margin: 0 auto; }
+    .newsletter-input {
+      flex: 1; padding: 14px 20px; border-radius: 12px;
+      border: none; font-size: 0.95rem; font-family: 'Manrope', sans-serif;
+      outline: none;
+      background: rgba(255,255,255,0.95);
+    }
+    .newsletter-input::placeholder { color: var(--stone-400); }
+    .btn-newsletter {
+      padding: 14px 24px; border-radius: 12px;
+      background: var(--gold); color: white;
+      font-weight: 700; font-size: 0.9rem;
+      border: none; cursor: pointer; white-space: nowrap;
+      transition: all 0.2s;
+    }
+    .btn-newsletter:hover { background: #B8922A; transform: translateY(-1px); }
+    .newsletter-privacy { font-size: 0.78rem; color: rgba(255,255,255,0.6); margin-top: 16px; }
+
+    @media (max-width: 600px) {
+      .newsletter-card { padding: 40px 24px; }
+      .newsletter-form { flex-direction: column; }
+      .newsletter-title { font-size: 1.5rem; }
+    }
+
+    /* ── CONTACT ── */
+    .contact-grid {
+      display: grid; grid-template-columns: 1fr 1.4fr; gap: 56px; align-items: start;
+    }
+    .contact-info-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem; font-weight: 600; color: var(--stone-800);
+      margin-bottom: 16px;
+    }
+    .contact-info-desc { font-size: 0.95rem; color: var(--stone-600); line-height: 1.7; margin-bottom: 36px; }
+    .contact-details { display: flex; flex-direction: column; gap: 20px; }
+    .contact-detail-item {
+      display: flex; align-items: flex-start; gap: 14px;
+    }
+    .contact-detail-icon {
+      width: 44px; height: 44px; min-width: 44px;
+      border-radius: 12px; background: var(--sky-pale);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .contact-detail-label { font-size: 0.75rem; font-weight: 700; color: var(--stone-400); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 4px; }
+    .contact-detail-val { font-size: 0.95rem; color: var(--stone-800); font-weight: 500; }
+    .contact-form-card {
+      background: white; border-radius: 24px;
+      padding: 40px; border: 1px solid var(--stone-200);
+      box-shadow: var(--shadow);
+    }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-group { margin-bottom: 20px; }
+    .form-label {
+      display: block; font-size: 0.82rem; font-weight: 600;
+      color: var(--stone-600); margin-bottom: 8px; letter-spacing: 0.03em;
+    }
+    .form-input, .form-textarea, .form-select {
+      width: 100%; padding: 12px 16px; border-radius: 10px;
+      border: 1.5px solid var(--stone-200);
+      font-size: 0.9rem; font-family: 'Manrope', sans-serif;
+      color: var(--stone-800); background: white;
+      outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-input:focus, .form-textarea:focus, .form-select:focus {
+      border-color: var(--sky);
+      box-shadow: 0 0 0 3px rgba(56,189,248,0.15);
+    }
+    .form-textarea { resize: vertical; min-height: 120px; }
+    .form-select { cursor: pointer; }
+    .btn-submit {
+      width: 100%; padding: 14px; border-radius: 12px;
+      background: linear-gradient(135deg, var(--sky), var(--sky-dark));
+      color: white; font-weight: 700; font-size: 0.95rem;
+      border: none; cursor: pointer;
+      box-shadow: 0 6px 24px rgba(14,165,233,0.3);
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: all 0.25s; font-family: 'Manrope', sans-serif;
+    }
+    .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(14,165,233,0.4); }
+    .success-msg {
+      text-align: center; padding: 32px;
+    }
+    .success-icon {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: #F0FDF4; border: 3px solid #16A34A;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px;
+    }
+    .success-title { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--stone-800); margin-bottom: 8px; }
+    .success-sub { color: var(--stone-400); font-size: 0.9rem; }
+
+    @media (max-width: 900px) {
+      .contact-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      .form-row { grid-template-columns: 1fr; }
+      .contact-form-card { padding: 28px 20px; }
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--stone-800); color: rgba(255,255,255,0.7);
+      padding: 64px 24px 32px;
+    }
+    .footer-inner { max-width: 1200px; margin: 0 auto; }
+    .footer-grid {
+      display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 48px; margin-bottom: 48px;
+    }
+    .footer-brand-logo {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+    }
+    .footer-brand-icon {
+      width: 40px; height: 40px;
+      background: linear-gradient(135deg, var(--sky), var(--sky-dark));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .footer-brand-name {
+      font-family: 'Playfair Display', serif;
+      color: white; font-size: 1.05rem; font-weight: 700;
+    }
+    .footer-brand-desc { font-size: 0.875rem; line-height: 1.65; margin-bottom: 24px; }
+    .footer-socials { display: flex; gap: 10px; }
+    .footer-social {
+      width: 36px; height: 36px; border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.12);
+      display: flex; align-items: center; justify-content: center;
+      color: rgba(255,255,255,0.5);
+      transition: all 0.2s; cursor: pointer; text-decoration: none;
+    }
+    .footer-social:hover { border-color: var(--sky); color: var(--sky); }
+    .footer-col-title {
+      color: white; font-weight: 700; font-size: 0.85rem;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+    .footer-links { display: flex; flex-direction: column; gap: 10px; }
+    .footer-link {
+      font-size: 0.88rem; color: rgba(255,255,255,0.6);
+      text-decoration: none; transition: color 0.2s; cursor: pointer; background: none; border: none;
+    }
+    .footer-link:hover { color: var(--sky); }
+    .footer-bottom {
+      padding-top: 32px; border-top: 1px solid rgba(255,255,255,0.08);
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      flex-wrap: wrap;
+    }
+    .footer-copy { font-size: 0.82rem; }
+    @media (max-width: 900px) {
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 600px) {
+      .footer-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+      animation: fadeIn 0.2s;
+    }
+    .modal-box {
+      background: white; border-radius: 24px;
+      width: 100%; max-width: 520px;
+      max-height: 85vh; overflow-y: auto;
+      box-shadow: 0 32px 64px rgba(0,0,0,0.2);
+      animation: slideUp 0.3s;
+    }
+    .modal-header {
+      padding: 28px 28px 0;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .modal-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem; font-weight: 600; color: var(--stone-800);
+    }
+    .modal-close {
+      width: 36px; height: 36px; border-radius: 8px;
+      background: var(--stone-100); border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--stone-400); transition: all 0.2s;
+    }
+    .modal-close:hover { background: var(--stone-200); color: var(--stone-800); }
+    .modal-body { padding: 24px 28px 28px; }
+    .modal-event-info {
+      background: var(--sky-ultra); border-radius: 14px; padding: 16px;
+      margin-bottom: 24px; display: flex; gap: 12px; align-items: center;
+    }
+    .modal-event-img { width: 64px; height: 64px; border-radius: 10px; object-fit: cover; }
+    .modal-event-name { font-weight: 600; font-size: 0.95rem; color: var(--stone-800); }
+    .modal-event-date { font-size: 0.82rem; color: var(--stone-400); margin-top: 3px; }
+
+    @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
+    @keyframes slideUp { from { opacity:0; transform:translateY(20px) } to { opacity:1; transform:translateY(0) } }
+
+    /* ── ANIMATIONS ── */
+    .fade-up { animation: fadeUpIn 0.6s ease both; }
+    @keyframes fadeUpIn {
+      from { opacity:0; transform:translateY(28px) }
+      to   { opacity:1; transform:translateY(0) }
+    }
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    .delay-3 { animation-delay: 0.3s; }
+    .delay-4 { animation-delay: 0.4s; }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; bottom: 32px; right: 32px; z-index: 999;
+      background: var(--stone-800); color: white;
+      padding: 14px 20px; border-radius: 14px;
+      display: flex; align-items: center; gap: 10px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+      animation: slideInRight 0.3s;
+      max-width: 360px;
+    }
+    .toast.success { border-left: 4px solid #16A34A; }
+    .toast.error { border-left: 4px solid #DC2626; }
+    .toast-icon { flex-shrink: 0; }
+    .toast-msg { font-size: 0.875rem; font-weight: 500; }
+    @keyframes slideInRight {
+      from { opacity:0; transform:translateX(20px) }
+      to   { opacity:1; transform:translateX(0) }
+    }
+
+    /* ── SKELETON ── */
+    .skeleton { background: linear-gradient(90deg, var(--stone-100) 25%, var(--stone-200) 50%, var(--stone-100) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; }
+    @keyframes shimmer { from { background-position:200% 0 } to { background-position:-200% 0 } }
+
+    /* ── DEMO BANNER ── */
+    .demo-banner {
+      position: fixed; top: 72px; left: 0; right: 0; z-index: 90;
+      background: linear-gradient(90deg, #D97706, #B45309);
+      color: white; text-align: center;
+      padding: 9px 16px; font-size: 0.82rem; font-weight: 600;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .demo-banner a {
+      color: #FDE68A; text-decoration: underline; font-weight: 700;
+    }
+    .demo-banner.hidden { display: none; }
+    /* push hero down when banner is visible */
+    body.demo-mode .hero { padding-top: 148px; }
+  </style>
+</head>
+<body>
+
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useCallback } = React;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ENVIRONMENT CONFIG
+// ─────────────────────────────────────────────────────────────────────────
+// This file runs in TWO environments automatically:
+//
+//  ① GitHub Pages (demo)  – hostname contains "github.io" or API_BASE is null
+//     • Forms show a friendly "contact us directly" message
+//     • Newsletter stores in localStorage for reference only
+//     • No backend required — full visual demo
+//
+//  ② Production VPS  – API_BASE points to your FastAPI backend via Nginx
+//     • All forms submit to real endpoints
+//     • Emails are sent, data saved to MongoDB, Excel exports available
+//
+// HOW TO CONFIGURE FOR PRODUCTION:
+//   Option A (recommended) – leave AUTO_DETECT = true. When served from your
+//     VPS domain the code detects it is NOT github.io and uses /api/* endpoints.
+//   Option B – set AUTO_DETECT = false and hard-code API_BASE:
+//     const API_BASE = 'https://dharmasthala.org.in';
+// ═══════════════════════════════════════════════════════════════════════════
+const AUTO_DETECT  = true;
+const FORCED_BASE  = null; // e.g. 'https://dharmasthala.org.in' — overrides auto-detect
+
+const _hostname    = window.location.hostname;
+const IS_DEMO      = AUTO_DETECT
+  ? (_hostname.includes('github.io') || _hostname === 'localhost' || _hostname === '127.0.0.1')
+  : (FORCED_BASE === null);
+
+// When IS_DEMO is true all API calls are intercepted and handled gracefully.
+// When false, API_BASE is used as the prefix for every fetch() call.
+const API_BASE     = FORCED_BASE || (IS_DEMO ? null : '');
+
+// ── API LAYER ──────────────────────────────────────────────────────────────
+// Single function to call. Returns { ok, data, error }.
+// On GitHub Pages: returns a graceful demo response without hitting a server.
+const DEMO_CONTACT_EMAIL  = 'events@dharmasthala.org.in'; // shown in demo messages
+const DEMO_CONTACT_PHONE  = '+91 08256 277 201';
+
+async function apiPost(path, body) {
+  if (IS_DEMO) {
+    // Simulate network latency for realism
+    await new Promise(r => setTimeout(r, 900 + Math.random() * 400));
+    return { ok: true, demo: true };
+  }
+  try {
+    const res = await fetch(API_BASE + path, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    return { ok: res.ok, data, error: res.ok ? null : (data.detail || 'Server error') };
+  } catch (err) {
+    return { ok: false, error: 'Network error — please check your connection.' };
+  }
+}
+
+
+// ─── ICON HELPER ─────────────────────────────────────────────────────────────
+const Icon = ({ name, size = 20, color = 'currentColor', strokeWidth = 2 }) => {
+  const el = React.useRef(null);
+  useEffect(() => {
+    if (!el.current || !window.lucide) return;
+    // Use Lucide's own createIcons API – works correctly with the UMD bundle
+    el.current.innerHTML = '';
+    const i = document.createElement('i');
+    i.setAttribute('data-lucide', name);
+    el.current.appendChild(i);
+    try {
+      window.lucide.createIcons({ nodes: [i] });
+    } catch(e) { return; }
+    const svg = el.current.querySelector('svg');
+    if (svg) {
+      svg.setAttribute('width', size);
+      svg.setAttribute('height', size);
+      svg.setAttribute('stroke-width', strokeWidth);
+      svg.style.color = color;
+      svg.style.stroke = color;
+      svg.style.display = 'block';
+    }
+  }, [name, size, color, strokeWidth]);
+  return <span ref={el} style={{display:'inline-flex',alignItems:'center',flexShrink:0}}></span>;
+};
+
+// ─── DATA ─────────────────────────────────────────────────────────────────────
+const EVENTS = [
+  {
+    id: 1,
+    title: "Laksha Deepotsava – Festival of a Lakh Lamps",
+    category: "Religious",
+    date: { day: "14", month: "Mar" },
+    location: "Dharmasthala Temple Premises",
+    time: "5:00 PM – 10:00 PM",
+    desc: "Witness the divine spectacle as one lakh earthen lamps illuminate the temple complex in celebration of Lord Shiva's grace.",
+    spots: "Open", spotsClass: "",
+    img: "https://images.unsplash.com/photo-1601925228008-d5f8c9a67e15?w=600&q=80",
+    fullDesc: "This grand festival of lights is held annually to commemorate the divine blessings of Lord Manjunatha. Devotees from across the country gather to participate in lighting diyas, singing devotional hymns, and witnessing the spectacular lamp procession.",
+    duration: "5 hours",
+    capacity: "Unlimited"
+  },
+  {
+    id: 2,
+    title: "Paryaya Mahotsava – Biennial Utsava",
+    category: "Cultural",
+    date: { day: "22", month: "Mar" },
+    location: "Udupi Sri Krishna Mutt",
+    time: "8:00 AM – 8:00 PM",
+    desc: "The grand biennial transfer of the reins of Udupi Sri Krishna Mutt, celebrated with regal processions and classical music.",
+    spots: "Limited", spotsClass: "limited",
+    img: "https://images.unsplash.com/photo-1614252235316-8c857d38b5f4?w=600&q=80",
+    fullDesc: "Paryaya Mahotsava is a unique tradition of the Ashtamathas where the charge of the Udupi Sri Krishna temple passes to the next seer once every two years. It is accompanied by grand processions, traditional music, dance, and religious ceremonies spanning an entire day.",
+    duration: "Full Day",
+    capacity: "500"
+  },
+  {
+    id: 3,
+    title: "Navaratra Mahotsava – Nine Nights of Worship",
+    category: "Religious",
+    date: { day: "02", month: "Apr" },
+    location: "Dharmasthala – Main Temple Hall",
+    time: "6:00 AM – 9:00 PM",
+    desc: "Nine nights of devotion to Goddess Durga, featuring Yakshagana performances, classical dance and daily puja rituals.",
+    spots: "Open", spotsClass: "",
+    img: "https://images.unsplash.com/photo-1608111284618-ed2b688b21c3?w=600&q=80",
+    fullDesc: "Navaratra is celebrated with great devotion over nine nights, each dedicated to a different form of Goddess Durga. The festival includes elaborate puja rituals, Yakshagana folk theatre, classical Bharatanatyam performances, and large-scale community feasts (Annadana).",
+    duration: "9 Days",
+    capacity: "Open"
+  },
+  {
+    id: 4,
+    title: "Rathotsava – Divine Chariot Procession",
+    category: "Procession",
+    date: { day: "18", month: "Apr" },
+    location: "Dharmasthala Main Road",
+    time: "7:00 AM – 2:00 PM",
+    desc: "The magnificent golden chariot of Lord Manjunatha winds through the decorated streets amid chants and floral showers.",
+    spots: "Open", spotsClass: "",
+    img: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80",
+    fullDesc: "The Rathotsava (Chariot Festival) is the climax of the annual temple festival. The deity is placed in an ornate golden chariot and pulled through the main streets by thousands of devotees. The streets are decorated with flowers, banana trunks, and festive lights.",
+    duration: "7 hours",
+    capacity: "Open"
+  },
+  {
+    id: 5,
+    title: "Kodagu Cultural Fest – Art, Music & Heritage",
+    category: "Cultural",
+    date: { day: "05", month: "May" },
+    location: "Community Hall, Madikeri",
+    time: "10:00 AM – 7:00 PM",
+    desc: "Celebrate the rich Kodava heritage with traditional Bolakaat folk dances, Cauvery cuisine, and handcraft exhibitions.",
+    spots: "Limited", spotsClass: "limited",
+    img: "https://images.unsplash.com/photo-1542296332-2e4473faf563?w=600&q=80",
+    fullDesc: "The Kodagu Cultural Festival is a vibrant celebration of the unique Kodava heritage. Enjoy traditional Bolakaat and Ummatt Kali folk dances, taste authentic Kodava cuisine, browse handcraft stalls, and witness martial arts demonstrations by the Kodava community.",
+    duration: "9 hours",
+    capacity: "300"
+  },
+  {
+    id: 6,
+    title: "Annadana Mahotsava – Mass Community Feast",
+    category: "Social",
+    date: { day: "20", month: "May" },
+    location: "Dharmasthala Dharmashala",
+    time: "11:00 AM – 3:00 PM",
+    desc: "A sacred tradition of feeding thousands of pilgrims in a single sitting – an act of service and community harmony.",
+    spots: "Full", spotsClass: "full",
+    img: "https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=600&q=80",
+    fullDesc: "Annadana (gift of food) is considered the greatest of all charities at Dharmasthala. During this festival, tens of thousands of devotees are served a wholesome meal in a single sitting, irrespective of caste or creed – a powerful symbol of equality and divine grace.",
+    duration: "4 hours",
+    capacity: "Fully Registered"
+  },
+];
+
+const FEATURES = [
+  { icon: "calendar-days", title: "Sacred Event Calendar", desc: "Stay updated with our comprehensive listing of temple festivals, cultural programs, and spiritual discourses throughout the year." },
+  { icon: "map-pin", title: "Multiple Sacred Sites", desc: "Events hosted across revered locations including Dharmasthala, Udupi, and Karnataka's prominent temple complexes." },
+  { icon: "users", title: "Community Participation", desc: "Open to all devotees regardless of caste, creed, or religion — a welcoming space for spiritual growth and cultural learning." },
+  { icon: "book-open", title: "Yakshagana & Arts", desc: "Experience the timeless folk art form Yakshagana, classical dance recitals, devotional music, and cultural exhibitions." },
+  { icon: "heart-handshake", title: "Annadana Seva", desc: "Participate in the sacred tradition of mass community feeding — a spiritual act of service and universal brotherhood." },
+  { icon: "sparkles", title: "Spiritual Discourses", desc: "Attend enlightening talks by revered spiritual leaders on Hindu philosophy, dharma, and the path of righteous living." },
+];
+
+const CATEGORIES = ["All", "Religious", "Cultural", "Procession", "Social"];
+
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+function Toast({ msg, type, onClose }) {
+  useEffect(() => { const t = setTimeout(onClose, 4000); return () => clearTimeout(t); }, []);
+  return (
+    <div className={`toast ${type}`}>
+      <span className="toast-icon">
+        {type === 'success'
+          ? <Icon name="circle-check" size={18} color="#16A34A" />
+          : <Icon name="circle-x" size={18} color="#DC2626" />}
+      </span>
+      <span className="toast-msg">{msg}</span>
+    </div>
+  );
+}
+
+// ─── REGISTER MODAL ───────────────────────────────────────────────────────────
+function RegisterModal({ event, onClose }) {
+  const [form, setForm] = useState({ name:'', email:'', phone:'', guests:'1' });
+  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.name || !form.email) return;
+    setLoading(true);
+    const result = await apiPost('/api/register', {
+      event_id:    event.id,
+      event_title: event.title,
+      name:        form.name,
+      email:       form.email,
+      phone:       form.phone,
+      guests:      parseInt(form.guests, 10),
+    });
+    setLoading(false);
+    if (result.ok) {
+      setSubmitted(true);
+      // Production: confirmation email sent by FastAPI backend via SMTP
+      // Demo: shows success UI with direct-contact info
+    } else {
+      alert('Registration failed: ' + (result.error || 'Please try again.'));
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal-box">
+        <div className="modal-header">
+          <span className="modal-title">{submitted ? "You're Registered!" : "Register for Event"}</span>
+          <button className="modal-close" onClick={onClose}><Icon name="x" size={18} /></button>
+        </div>
+        <div className="modal-body">
+          {!submitted ? (<>
+            <div className="modal-event-info">
+              <img className="modal-event-img" src={event.img} alt={event.title} />
+              <div>
+                <div className="modal-event-name">{event.title}</div>
+                <div className="modal-event-date">{event.date.day} {event.date.month} • {event.time}</div>
+              </div>
+            </div>
+            <form onSubmit={handleSubmit}>
+              <div className="form-row">
+                <div className="form-group">
+                  <label className="form-label">Full Name *</label>
+                  <input className="form-input" placeholder="Your name" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} required />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Phone Number</label>
+                  <input className="form-input" placeholder="+91 XXXXX XXXXX" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})} />
+                </div>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Email Address *</label>
+                <input className="form-input" type="email" placeholder="you@example.com" value={form.email} onChange={e=>setForm({...form,email:e.target.value})} required />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Number of Guests</label>
+                <select className="form-select" value={form.guests} onChange={e=>setForm({...form,guests:e.target.value})}>
+                  {[1,2,3,4,5].map(n=><option key={n} value={n}>{n} {n===1?'person':'people'}</option>)}
+                </select>
+              </div>
+              <button className="btn-submit" type="submit" disabled={loading}>
+                {loading ? <><Icon name="loader-circle" size={18} />Processing...</> : <><Icon name="check-circle" size={18} />Confirm Registration</>}
+              </button>
+            </form>
+          </>) : (
+            <div className="success-msg">
+              <div className="success-icon"><Icon name="check" size={28} color="#16A34A" /></div>
+              <div className="success-title">Registration Confirmed!</div>
+              <p className="success-sub" style={{marginTop:8}}>
+                {IS_DEMO
+                  ? <span>Demo mode — no email was sent. To actually register, contact us at <strong>{DEMO_CONTACT_EMAIL}</strong> or call <strong>{DEMO_CONTACT_PHONE}</strong>.</span>
+                  : <span>A confirmation email has been sent to <strong>{form.email}</strong>. We look forward to seeing you at <em>{event.title}</em>.</span>
+                }
+              </p>
+              <button className="btn-primary" style={{marginTop:24, width:'100%', justifyContent:'center'}} onClick={onClose}>Done</button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── APP ──────────────────────────────────────────────────────────────────────
+export default function App() {
+  const [scrolled, setScrolled] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [activeFilter, setActiveFilter] = useState("All");
+  const [toast, setToast] = useState(null);
+  const [registerEvent, setRegisterEvent] = useState(null);
+  const [contactForm, setContactForm] = useState({ name:'', email:'', phone:'', subject:'', message:'' });
+  const [contactLoading, setContactLoading] = useState(false);
+  const [contactSent, setContactSent] = useState(false);
+  const [newsletter, setNewsletter] = useState('');
+  const [newsletterLoading, setNewsletterLoading] = useState(false);
+
+  useEffect(() => {
+    const fn = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', fn);
+    return () => window.removeEventListener('scroll', fn);
+  }, []);
+
+  const showToast = (msg, type='success') => {
+    setToast({ msg, type });
+  };
+
+  const filteredEvents = activeFilter === "All" ? EVENTS : EVENTS.filter(e => e.category === activeFilter);
+
+  const scrollTo = (id) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+    setMobileOpen(false);
+  };
+
+  const handleContact = async (e) => {
+    e.preventDefault();
+    setContactLoading(true);
+    const result = await apiPost('/api/contact', contactForm);
+    setContactLoading(false);
+    if (result.ok) {
+      setContactSent(true);
+      showToast(
+        result.demo
+          ? 'Demo mode — please email us directly at ' + DEMO_CONTACT_EMAIL
+          : "Your message has been sent! We'll reply within 24–48 hours.",
+        'success'
+      );
+    } else {
+      showToast('Failed to send: ' + (result.error || 'Please try again.'), 'error');
+    }
+  };
+
+  const handleNewsletter = async (e) => {
+    e.preventDefault();
+    if (!newsletter) return;
+    setNewsletterLoading(true);
+    const result = await apiPost('/api/newsletter', { email: newsletter });
+    setNewsletterLoading(false);
+    if (result.ok) {
+      setNewsletter('');
+      showToast(
+        result.demo
+          ? 'Demo mode — subscription recorded locally only.'
+          : "You've been subscribed to our newsletter!",
+        'success'
+      );
+    } else {
+      showToast('Subscription failed: ' + (result.error || 'Please try again.'), 'error');
+    }
+  };
+
+  const NAV_LINKS = [
+    { label: "Home", id: "hero" },
+    { label: "Features", id: "features" },
+    { label: "Events", id: "events" },
+    { label: "Contact", id: "contact" },
+  ];
+
+  // Apply demo-mode body class for hero padding adjustment
+  useEffect(() => {
+    if (IS_DEMO) document.body.classList.add('demo-mode');
+    return () => document.body.classList.remove('demo-mode');
+  }, []);
+
+  return (
+    <>
+      {/* ── DEMO BANNER ── */}
+      {IS_DEMO && (
+        <div className="demo-banner">
+          <span>⚠ Demo mode — forms are not connected to a backend.</span>
+          <span>To reach us: <a href={"mailto:" + DEMO_CONTACT_EMAIL}>{DEMO_CONTACT_EMAIL}</a> · {DEMO_CONTACT_PHONE}</span>
+        </div>
+      )}
+      {/* ── NAV ── */}
+      <nav className={scrolled ? 'scrolled' : ''}>
+        <div className="nav-inner">
+          <a className="nav-logo" href="#hero">
+            <div className="nav-logo-icon">
+              <Icon name="flame" size={22} color="white" />
+            </div>
+            <div>
+              <div className="nav-logo-text">Dharmasthala</div>
+              <div className="nav-logo-sub">Sacred Events</div>
+            </div>
+          </a>
+          <div className="nav-links">
+            {NAV_LINKS.map(l => (
+              <button key={l.id} className="nav-link" onClick={() => scrollTo(l.id)}>{l.label}</button>
+            ))}
+            <button className="nav-cta" onClick={() => scrollTo('events')}>View Events</button>
+          </div>
+          <button className="nav-mobile-btn" onClick={() => setMobileOpen(o=>!o)}>
+            <Icon name={mobileOpen ? "x" : "menu"} size={24} />
+          </button>
+        </div>
+        <div className={`mobile-menu ${mobileOpen ? 'open' : ''}`}>
+          {NAV_LINKS.map(l => (
+            <button key={l.id} className="mobile-link" onClick={() => scrollTo(l.id)}>{l.label}</button>
+          ))}
+        </div>
+      </nav>
+
+      {/* ── HERO ── */}
+      <section id="hero" className="hero">
+        <div className="hero-bg"></div>
+        <div className="hero-pattern"></div>
+        <div className="hero-inner">
+          <div>
+            <div className="hero-badge fade-up">
+              <Icon name="sparkles" size={13} color="#92670A" />
+              Sacred Celebrations Await
+            </div>
+            <h1 className="hero-title fade-up delay-1">
+              Experience the <em>Divine</em> Through Sacred Events
+            </h1>
+            <p className="hero-desc fade-up delay-2">
+              Dharmasthala welcomes all devotees to its grand tapestry of religious festivals, cultural programs, and spiritual discourses — where faith, art, and community converge in harmony.
+            </p>
+            <div className="hero-actions fade-up delay-3">
+              <button className="btn-primary" onClick={() => scrollTo('events')}>
+                <Icon name="calendar" size={18} /> Explore Events
+              </button>
+              <button className="btn-secondary" onClick={() => scrollTo('contact')}>
+                <Icon name="phone" size={18} /> Get in Touch
+              </button>
+            </div>
+            <div className="hero-stats fade-up delay-4">
+              <div>
+                <div className="hero-stat-num">50<span>+</span></div>
+                <div className="hero-stat-label">Annual Events</div>
+              </div>
+              <div>
+                <div className="hero-stat-num">1<span>M+</span></div>
+                <div className="hero-stat-label">Devotees Annually</div>
+              </div>
+              <div>
+                <div className="hero-stat-num">800<span>+</span></div>
+                <div className="hero-stat-label">Years of Heritage</div>
+              </div>
+            </div>
+          </div>
+          <div className="hero-visual fade-up delay-2">
+            <img
+              className="hero-img-main"
+              src="https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=800&q=85"
+              alt="Dharmasthala temple"
+            />
+            <img
+              className="hero-img-float hero-img-float-1"
+              src="https://images.unsplash.com/photo-1564507592333-c60657eea523?w=400&q=80"
+              alt="Devotees"
+            />
+            <img
+              className="hero-img-float hero-img-float-2"
+              src="https://images.unsplash.com/photo-1601925228008-d5f8c9a67e15?w=400&q=80"
+              alt="Lamps"
+            />
+            <div className="hero-badge-float">
+              <div className="hero-badge-float-icon"><Icon name="star" size={20} color="#38BDF8" /></div>
+              <div>
+                <div className="hero-badge-float-title">Next Event in 12 Days</div>
+                <div className="hero-badge-float-sub">Laksha Deepotsava</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── FEATURES ── */}
+      <section id="features" className="features-bg">
+        <div className="section-inner">
+          <div className="section-header center">
+            <div className="section-tag"><Icon name="layout-grid" size={12} /> Our Offerings</div>
+            <h2 className="section-title">A Sanctuary for <em style={{fontFamily:'Playfair Display',fontStyle:'italic',color:'var(--sky-dark)'}}>Body, Mind & Soul</em></h2>
+            <p className="section-sub">From grand religious festivals to intimate cultural programs, Dharmasthala nurtures the spirit of every seeker who walks through its gates.</p>
+          </div>
+          <div className="features-grid">
+            {FEATURES.map((f, i) => (
+              <div key={i} className="feature-card" style={{ animationDelay: `${i * 0.1}s` }}>
+                <div className="feature-icon">
+                  <Icon name={f.icon} size={24} color="var(--sky-dark)" />
+                </div>
+                <div className="feature-title">{f.title}</div>
+                <p className="feature-desc">{f.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── EVENTS ── */}
+      <section id="events">
+        <div className="section-inner">
+          <div className="section-header">
+            <div className="section-tag"><Icon name="calendar-days" size={12} /> Upcoming Events</div>
+            <h2 className="section-title">Sacred Occasions, <em style={{fontFamily:'Playfair Display',fontStyle:'italic',color:'var(--sky-dark)'}}>Awaiting You</em></h2>
+            <p className="section-sub">Browse our upcoming festivals and cultural events. Register early to secure your place in these cherished celebrations.</p>
+          </div>
+          <div className="events-filter">
+            {CATEGORIES.map(cat => (
+              <button key={cat} className={`filter-btn ${activeFilter === cat ? 'active' : ''}`} onClick={() => setActiveFilter(cat)}>
+                {cat}
+              </button>
+            ))}
+          </div>
+          <div className="events-grid">
+            {filteredEvents.map(ev => (
+              <div key={ev.id} className="event-card">
+                <div className="event-card-img">
+                  <img src={ev.img} alt={ev.title} />
+                  <span className="event-category">{ev.category}</span>
+                  <div className="event-date-badge">
+                    <div className="event-date-day">{ev.date.day}</div>
+                    <div className="event-date-mon">{ev.date.month}</div>
+                  </div>
+                </div>
+                <div className="event-card-body">
+                  <h3 className="event-title">{ev.title}</h3>
+                  <div className="event-meta">
+                    <div className="event-meta-row">
+                      <Icon name="map-pin" size={14} color="var(--sky)" />
+                      {ev.location}
+                    </div>
+                    <div className="event-meta-row">
+                      <Icon name="clock" size={14} color="var(--sky)" />
+                      {ev.time}
+                    </div>
+                    <div className="event-meta-row">
+                      <Icon name="timer" size={14} color="var(--sky)" />
+                      Duration: {ev.duration}
+                    </div>
+                  </div>
+                  <p className="event-desc">{ev.desc}</p>
+                  <div className="event-footer">
+                    <span className={`event-spots ${ev.spotsClass}`}>
+                      {ev.spots === "Open" ? "✓ Open Registration" : ev.spots === "Limited" ? "⚡ Limited Spots" : "✗ Fully Booked"}
+                    </span>
+                    <button
+                      className="btn-register"
+                      onClick={() => ev.spots !== "Full" && setRegisterEvent(ev)}
+                      disabled={ev.spots === "Full"}
+                      style={ev.spots === "Full" ? { opacity:0.5, cursor:'not-allowed' } : {}}
+                    >
+                      <Icon name="user-plus" size={14} />
+                      Register
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          {filteredEvents.length === 0 && (
+            <div style={{textAlign:'center', padding:'80px 24px', color:'var(--stone-400)'}}>
+              <Icon name="calendar-x" size={48} color="var(--stone-200)" />
+              <p style={{marginTop:16, fontWeight:500}}>No events in this category currently.</p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ── NEWSLETTER ── */}
+      <section id="newsletter" className="newsletter-section">
+        <div className="section-inner">
+          <div className="newsletter-card">
+            <div className="newsletter-icon">
+              <Icon name="mail" size={32} color="white" />
+            </div>
+            <h2 className="newsletter-title">Stay Blessed & Informed</h2>
+            <p className="newsletter-sub">Subscribe to receive divine updates about upcoming festivals, discourses, and cultural events directly in your inbox.</p>
+            <form className="newsletter-form" onSubmit={handleNewsletter}>
+              <input
+                className="newsletter-input"
+                type="email"
+                placeholder="Enter your email address"
+                value={newsletter}
+                onChange={e => setNewsletter(e.target.value)}
+                required
+              />
+              <button className="btn-newsletter" type="submit" disabled={newsletterLoading}>
+                {newsletterLoading ? 'Subscribing...' : 'Subscribe'}
+              </button>
+            </form>
+            <p className="newsletter-privacy">
+              <Icon name="lock" size={11} color="rgba(255,255,255,0.5)" /> No spam. Unsubscribe anytime. Your privacy is sacred to us.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── CONTACT ── */}
+      <section id="contact">
+        <div className="section-inner">
+          <div className="section-header">
+            <div className="section-tag"><Icon name="message-circle" size={12} /> Contact Us</div>
+            <h2 className="section-title">Reach Out to <em style={{fontFamily:'Playfair Display',fontStyle:'italic',color:'var(--sky-dark)'}}>Our Sevadars</em></h2>
+            <p className="section-sub">Have questions about events, accommodations, or spiritual guidance? Our devoted team is here to assist you.</p>
+          </div>
+          <div className="contact-grid">
+            <div>
+              <h3 className="contact-info-title">We're Here to Serve</h3>
+              <p className="contact-info-desc">
+                Dharmasthala's seva team is available throughout the week to answer your queries about upcoming events, pilgrimage facilities, and cultural programs.
+              </p>
+              <div className="contact-details">
+                {[
+                  { icon: "map-pin", label: "Address", val: "Dharmasthala, Belthangady Taluk, Dakshina Kannada – 574216" },
+                  { icon: "phone", label: "Phone", val: "+91 08256 277 201 / +91 08256 277 202" },
+                  { icon: "mail", label: "Email", val: "events@dharmasthala.org.in" },
+                  { icon: "clock", label: "Seva Hours", val: "Mon – Sat: 8:00 AM – 6:00 PM" },
+                ].map((item, i) => (
+                  <div key={i} className="contact-detail-item">
+                    <div className="contact-detail-icon"><Icon name={item.icon} size={20} color="var(--sky-dark)" /></div>
+                    <div>
+                      <div className="contact-detail-label">{item.label}</div>
+                      <div className="contact-detail-val">{item.val}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="contact-form-card">
+              {contactSent ? (
+                <div className="success-msg">
+                  <div className="success-icon"><Icon name="check" size={28} color="#16A34A" /></div>
+                  <div className="success-title">Message Sent!</div>
+                  <p className="success-sub" style={{marginTop:8}}>Our sevadars will get back to you within 24–48 hours. May Lord Manjunatha bless your journey.</p>
+                  <button className="btn-primary" style={{marginTop:24, width:'100%', justifyContent:'center'}} onClick={() => setContactSent(false)}>
+                    Send Another Message
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleContact}>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label">Your Name *</label>
+                      <input className="form-input" placeholder="Full name" value={contactForm.name} onChange={e=>setContactForm({...contactForm,name:e.target.value})} required />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Email Address *</label>
+                      <input className="form-input" type="email" placeholder="you@example.com" value={contactForm.email} onChange={e=>setContactForm({...contactForm,email:e.target.value})} required />
+                    </div>
+                  </div>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label">Phone Number</label>
+                      <input className="form-input" placeholder="+91 XXXXX XXXXX" value={contactForm.phone} onChange={e=>setContactForm({...contactForm,phone:e.target.value})} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Subject *</label>
+                      <select className="form-select" value={contactForm.subject} onChange={e=>setContactForm({...contactForm,subject:e.target.value})} required>
+                        <option value="">Select topic</option>
+                        <option value="event-info">Event Information</option>
+                        <option value="registration">Event Registration</option>
+                        <option value="accommodation">Accommodation</option>
+                        <option value="volunteering">Volunteering / Seva</option>
+                        <option value="donations">Donations</option>
+                        <option value="other">Other Inquiry</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Your Message *</label>
+                    <textarea className="form-textarea" placeholder="Tell us how we can assist you..." value={contactForm.message} onChange={e=>setContactForm({...contactForm,message:e.target.value})} required></textarea>
+                  </div>
+                  <button className="btn-submit" type="submit" disabled={contactLoading}>
+                    {contactLoading ? <><Icon name="loader-circle" size={18} />Sending...</> : <><Icon name="send" size={18} />Send Message</>}
+                  </button>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── FOOTER ── */}
+      <footer>
+        <div className="footer-inner">
+          <div className="footer-grid">
+            <div>
+              <div className="footer-brand-logo">
+                <div className="footer-brand-icon"><Icon name="flame" size={20} color="white" /></div>
+                <div className="footer-brand-name">Dharmasthala Events</div>
+              </div>
+              <p className="footer-brand-desc">
+                A sacred confluence of devotion, culture, and community — where every soul finds a home in the divine light of Lord Manjunatha's grace.
+              </p>
+              <div className="footer-socials">
+                {['facebook', 'instagram', 'youtube', 'twitter'].map(s => (
+                  <a key={s} className="footer-social" href="#"><Icon name={s} size={16} /></a>
+                ))}
+              </div>
+            </div>
+            <div>
+              <div className="footer-col-title">Quick Links</div>
+              <div className="footer-links">
+                {['Home', 'About Us', 'Events', 'Gallery', 'Contact'].map(l => (
+                  <button key={l} className="footer-link" onClick={() => scrollTo(l.toLowerCase().replace(' ',''))}>{l}</button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <div className="footer-col-title">Events</div>
+              <div className="footer-links">
+                {['Religious Festivals', 'Cultural Programs', 'Yakshagana', 'Processions', 'Seva Camps'].map(l => (
+                  <span key={l} className="footer-link">{l}</span>
+                ))}
+              </div>
+            </div>
+            <div>
+              <div className="footer-col-title">Support</div>
+              <div className="footer-links">
+                {['Pilgrimage Info', 'Accommodation', 'Annadana Seva', 'Volunteer', 'Donate'].map(l => (
+                  <span key={l} className="footer-link">{l}</span>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="footer-bottom">
+            <span className="footer-copy">© 2025 Dharmasthala Religious & Charitable Trust. All rights reserved.</span>
+            <span className="footer-copy" style={{fontSize:'0.8rem', color:'rgba(255,255,255,0.4)'}}>Privacy Policy · Terms of Use</span>
+          </div>
+        </div>
+      </footer>
+
+      {/* ── REGISTER MODAL ── */}
+      {registerEvent && <RegisterModal event={registerEvent} onClose={() => setRegisterEvent(null)} />}
+
+      {/* ── TOAST ── */}
+      {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

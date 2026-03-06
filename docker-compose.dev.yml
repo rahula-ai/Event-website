@@ -1,0 +1,45 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# docker-compose.dev.yml – Development Overrides
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+# ─────────────────────────────────────────────────────────────────────────────
+
+version: "3.9"
+
+services:
+
+  backend:
+    build:
+      context: ./backend
+    command: >
+      uvicorn main:app
+        --host 0.0.0.0
+        --port 8000
+        --reload
+        --log-level debug
+    ports:
+      - "8000:8000"            # Direct access for testing / Swagger UI
+    environment:
+      - ENVIRONMENT=development
+      - ALLOWED_ORIGINS=*
+    volumes:
+      - ./backend:/app         # Hot-reload: mount source directly
+    networks:
+      - internal_net
+
+  frontend:
+    ports:
+      - "3000:80"              # Direct access: http://localhost:3000
+
+  mongo:
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: devroot
+      MONGO_INITDB_ROOT_PASSWORD: devpassword
+    ports:
+      - "27017:27017"          # Direct access for MongoDB Compass / mongosh
+
+  nginx:
+    # In dev, use a simple HTTP-only config (no TLS)
+    volumes:
+      - ./nginx/conf.d/dev.conf:/etc/nginx/conf.d/dharmasthala.conf:ro
+    ports:
+      - "8080:80"              # http://localhost:8080

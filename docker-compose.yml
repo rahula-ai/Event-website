@@ -1,0 +1,226 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# docker-compose.yml – Production Stack
+# Dharmasthala Events Website
+#
+# Services:
+#   nginx     – Reverse proxy, TLS termination, rate limiting
+#   frontend  – React SPA served by Nginx (static)
+#   backend   – FastAPI application (uvicorn)
+#   mongo     – MongoDB 7 with persistent volume
+#   mongo-express – Admin UI (bind to 127.0.0.1 only, dev/staging use)
+#
+# Usage:
+#   cp .env.example .env && nano .env
+#   docker compose pull
+#   docker compose up -d
+#   docker compose logs -f
+# ─────────────────────────────────────────────────────────────────────────────
+
+version: "3.9"
+
+# ── Networks ──────────────────────────────────────────────────────────────────
+networks:
+  public_net:          # nginx ↔ world
+    driver: bridge
+  internal_net:        # nginx ↔ frontend ↔ backend ↔ mongo (no public exposure)
+    driver: bridge
+    internal: true
+
+# ── Volumes ───────────────────────────────────────────────────────────────────
+volumes:
+  mongo_data:          # MongoDB data persistence
+    driver: local
+  mongo_config:        # MongoDB config
+    driver: local
+  certbot_certs:       # Let's Encrypt certificates
+    driver: local
+  certbot_www:         # ACME challenge webroot
+    driver: local
+  nginx_logs:
+    driver: local
+
+# ── Services ──────────────────────────────────────────────────────────────────
+services:
+
+  # ── Nginx (edge proxy) ──────────────────────────────────────────────────────
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: dharmasthala_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - certbot_certs:/etc/letsencrypt:ro
+      - certbot_www:/var/www/certbot:ro
+      - nginx_logs:/var/log/nginx
+    networks:
+      - public_net
+      - internal_net
+    depends_on:
+      frontend:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+  # ── Frontend (React SPA) ─────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: dharmasthala-frontend:${IMAGE_TAG:-latest}
+    container_name: dharmasthala_frontend
+    restart: unless-stopped
+    networks:
+      - internal_net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:80/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "3"
+
+  # ── Backend (FastAPI) ─────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: dharmasthala-backend:${IMAGE_TAG:-latest}
+    container_name: dharmasthala_backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - ENVIRONMENT=production
+      - MONGO_URL=mongodb://mongo:27017/${MONGO_DB:-dharmasthala_events}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-https://YOUR_DOMAIN}
+    networks:
+      - internal_net
+    depends_on:
+      mongo:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "7"
+
+  # ── MongoDB ───────────────────────────────────────────────────────────────────
+  mongo:
+    image: mongo:7.0
+    container_name: dharmasthala_mongo
+    restart: unless-stopped
+    command: >
+      mongod
+      --auth
+      --bind_ip_all
+      --wiredTigerCacheSizeGB 0.5
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-mongoroot}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASS:?MONGO_ROOT_PASS is required}
+      MONGO_INITDB_DATABASE: ${MONGO_DB:-dharmasthala_events}
+    volumes:
+      - mongo_data:/data/db
+      - mongo_config:/data/configdb
+      - ./scripts/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    networks:
+      - internal_net
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+  # ── Certbot (Let's Encrypt – one-shot + renewal) ───────────────────────────
+  certbot:
+    image: certbot/certbot:latest
+    container_name: dharmasthala_certbot
+    volumes:
+      - certbot_certs:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    # Run once to obtain cert; renewal handled by scripts/renew-ssl.sh cron
+    entrypoint: >
+      sh -c "certbot certonly --webroot --webroot-path=/var/www/certbot
+             --email ${CERTBOT_EMAIL:-admin@YOUR_DOMAIN}
+             --agree-tos --no-eff-email --non-interactive
+             -d ${DOMAIN:-YOUR_DOMAIN} -d www.${DOMAIN:-YOUR_DOMAIN}
+             && echo 'Cert obtained' || echo 'Cert already exists'"
+    profiles:
+      - ssl-init         # Only runs when: docker compose --profile ssl-init up certbot
+
+  # ── Mongo Express (admin UI – staging / internal only) ─────────────────────
+  mongo-express:
+    image: mongo-express:latest
+    container_name: dharmasthala_mongoexpress
+    restart: unless-stopped
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_ROOT_USER:-mongoroot}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_ROOT_PASS}
+      ME_CONFIG_MONGODB_URL: mongodb://${MONGO_ROOT_USER:-mongoroot}:${MONGO_ROOT_PASS}@mongo:27017/
+      ME_CONFIG_BASICAUTH_USERNAME: ${MONGOEXPRESS_USER:-meadmin}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${MONGOEXPRESS_PASS:?MONGOEXPRESS_PASS required}
+    ports:
+      - "127.0.0.1:8081:8081"   # Bind to localhost ONLY – access via SSH tunnel
+    networks:
+      - internal_net
+    depends_on:
+      mongo:
+        condition: service_healthy
+    profiles:
+      - admin-tools            # docker compose --profile admin-tools up mongo-express
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "2"
