@@ -1,0 +1,240 @@
+name: Deploy – VPS Production
+# ─────────────────────────────────────────────────────────────────────────────
+# Full CI/CD pipeline: test → build Docker images → push to GHCR → SSH deploy.
+# Runs on push to main (alongside deploy-pages.yml — both run in parallel).
+#
+# Required GitHub Secrets (Settings → Secrets and variables → Actions):
+#
+#   DEPLOY_HOST       Your server IP or hostname
+#   DEPLOY_USER       SSH username (e.g. dharmasthala)
+#   DEPLOY_SSH_KEY    Private SSH key (ed25519 recommended)
+#   DEPLOY_PORT       SSH port — default 22 (optional, omit if standard)
+#   DOMAIN            Your domain, e.g. dharmasthala.org.in
+#   GHCR_READ_TOKEN   A GitHub PAT with read:packages scope
+#                     (Needed by the server to pull images from GHCR.
+#                      GITHUB_TOKEN only works on the Actions runner,
+#                      NOT inside an SSH session on your server.)
+#
+# Optional Secrets (add when features are enabled):
+#   MONGO_ROOT_PASS, SMTP_PASS, ADMIN_API_KEY, MAILCHIMP_API_KEY, etc.
+#   See .env.example for the full list.
+# ─────────────────────────────────────────────────────────────────────────────
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      # Don't trigger a VPS deploy for docs-only changes
+      - "*.md"
+      - "docs/**"
+  pull_request:
+    branches: [main]   # Runs test + security on PRs but does NOT deploy
+  workflow_dispatch:
+
+env:
+  REGISTRY:     ghcr.io
+  # github.repository_owner is your GitHub username or org — no placeholder needed
+  IMAGE_PREFIX: ${{ github.repository_owner }}/dharmasthala
+
+jobs:
+  # ── 1. Lint & test backend ─────────────────────────────────────────────────
+  test:
+    name: Test Backend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio httpx ruff
+
+      - name: Syntax check
+        run: python -m py_compile main.py && echo "✅ Syntax OK"
+
+      - name: Lint (Ruff)
+        run: ruff check . --select E,W,F,I --ignore E501
+
+      - name: Tests
+        run: |
+          if [ -d tests ]; then
+            pytest tests/ -v --tb=short
+          else
+            echo "⚠ No tests/ directory — add backend/tests/test_api.py"
+          fi
+
+  # ── 2. Security scan ───────────────────────────────────────────────────────
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Trivy filesystem scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: HIGH,CRITICAL
+          exit-code: "0"   # Change to "1" to block merges on critical vulns
+
+      - name: Pip audit
+        run: |
+          pip install pip-audit
+          pip-audit -r backend/requirements.txt --desc || true
+
+  # ── 3. Build & push Docker images ─────────────────────────────────────────
+  build:
+    name: Build & Push Images
+    needs: [test]
+    # Only build + deploy on pushes to main, not on PRs
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write   # Needed to push to GHCR
+
+    outputs:
+      image_tag: ${{ steps.meta.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Use GITHUB_TOKEN here — this runs on the Actions runner, so it works
+      - name: Log in to GHCR (runner)
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}
+          tags: |
+            type=sha,prefix=,format=short
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      # Sync root index.html → frontend/ so Docker build uses the latest version.
+      # This keeps one single source of truth (root index.html) for both
+      # GitHub Pages AND the VPS Docker image.
+      - name: Sync frontend index.html from repo root
+        run: cp index.html frontend/index.html
+
+      - name: Build & push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-backend:${{ steps.meta.outputs.version }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-backend:latest
+          cache-from: type=gha
+          cache-to:   type=gha,mode=max
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Build & push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-frontend:${{ steps.meta.outputs.version }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-frontend:latest
+          cache-from: type=gha
+          cache-to:   type=gha,mode=max
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Scan backend image for vulnerabilities
+        run: |
+          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-backend:${{ steps.meta.outputs.version }}
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            aquasec/trivy:latest image \
+            --severity HIGH,CRITICAL \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-backend:${{ steps.meta.outputs.version }} || true
+
+  # ── 4. Deploy to VPS ───────────────────────────────────────────────────────
+  deploy:
+    name: Deploy to VPS
+    needs: [build]
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://${{ secrets.DOMAIN }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # GHCR_READ_TOKEN is a PAT (Personal Access Token) with read:packages scope.
+      # Unlike GITHUB_TOKEN it is a long-lived credential that works inside SSH
+      # sessions on your server. Create it at:
+      #   GitHub → Settings → Developer settings → Personal access tokens → Fine-grained
+      #   Permissions: read:packages
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host:     ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key:      ${{ secrets.DEPLOY_SSH_KEY }}
+          # Port defaults to 22 if DEPLOY_PORT secret is not set
+          port:              ${{ secrets.DEPLOY_PORT || '22' }}
+          host_key_checking: false   # Prevents 'Host key verification failed' on first deploy
+          envs:     IMAGE_TAG,GHCR_OWNER,GHCR_READ_TOKEN,GITHUB_ACTOR
+          script: |
+            set -e
+            cd /opt/dharmasthala
+
+            # Log in to GHCR using the read-only PAT — works on the server
+            echo "${GHCR_READ_TOKEN}" | \
+              docker login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
+
+            # Run the deploy script (pulls images, rolling restart, health check)
+            GHCR_OWNER="${GHCR_OWNER}" \
+            IMAGE_TAG="${IMAGE_TAG}" \
+              bash scripts/deploy.sh
+        env:
+          IMAGE_TAG:       ${{ needs.build.outputs.image_tag }}
+          GHCR_OWNER:      ${{ github.repository_owner }}
+          GHCR_READ_TOKEN: ${{ secrets.GHCR_READ_TOKEN }}
+          GITHUB_ACTOR:    ${{ github.actor }}
+
+      - name: Verify health endpoint
+        run: |
+          echo "Waiting 20s for services to stabilise..."
+          sleep 20
+          STATUS=$(curl -sf -o /dev/null -w "%{http_code}" \
+            "https://${{ secrets.DOMAIN }}/health" || echo "000")
+          if [ "$STATUS" = "200" ]; then
+            echo "✅ Health check passed (HTTP $STATUS)"
+          else
+            echo "❌ Health check returned HTTP $STATUS"
+            exit 1
+          fi
+
+      - name: Deployment summary
+        if: always()
+        run: |
+          echo "## Deployment Result" >> $GITHUB_STEP_SUMMARY
+          echo "| | |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| Image tag | \`${{ needs.build.outputs.image_tag }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Domain | https://${{ secrets.DOMAIN }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Status | ${{ job.status }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Time | $(date -u) |" >> $GITHUB_STEP_SUMMARY
