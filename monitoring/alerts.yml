@@ -1,0 +1,91 @@
+groups:
+  - name: dharmasthala_alerts
+    interval: 30s
+    rules:
+
+      # ── API availability ─────────────────────────────────────────────────────
+      - alert: BackendDown
+        expr: up{job="fastapi_backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Backend API is down"
+          description: "FastAPI backend has been unreachable for more than 1 minute."
+
+      - alert: NginxDown
+        expr: up{job="nginx"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Nginx is down"
+          description: "Nginx has been unreachable for more than 1 minute."
+
+      # ── Error rates ───────────────────────────────────────────────────────────
+      - alert: HighErrorRate
+        expr: |
+          rate(http_requests_total{status=~"5.."}[5m]) /
+          rate(http_requests_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High HTTP 5xx error rate"
+          description: "Error rate is {{ $value | humanizePercentage }} over the last 5 minutes."
+
+      # ── Resource pressure ─────────────────────────────────────────────────────
+      - alert: HighMemoryUsage
+        expr: |
+          (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) /
+          node_memory_MemTotal_bytes > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on host"
+          description: "Memory usage is {{ $value | humanizePercentage }}."
+
+      - alert: DiskSpaceLow
+        expr: |
+          (node_filesystem_avail_bytes{mountpoint="/"} /
+           node_filesystem_size_bytes{mountpoint="/"}) < 0.15
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Disk space below 15%"
+          description: "Only {{ $value | humanizePercentage }} disk space remaining on /."
+
+      - alert: DiskSpaceCritical
+        expr: |
+          (node_filesystem_avail_bytes{mountpoint="/"} /
+           node_filesystem_size_bytes{mountpoint="/"}) < 0.05
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical disk space – under 5%"
+          description: "Disk at {{ $value | humanizePercentage }} – immediate action needed."
+
+      # ── Container health ──────────────────────────────────────────────────────
+      - alert: ContainerRestarting
+        expr: |
+          increase(container_start_time_seconds{name=~"dharmasthala_.*"}[10m]) > 2
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container restarting frequently"
+          description: "Container {{ $labels.name }} has restarted multiple times in 10 minutes."
+
+      # ── SSL certificate expiry ────────────────────────────────────────────────
+      - alert: SSLCertExpiringSoon
+        expr: |
+          probe_ssl_earliest_cert_expiry - time() < 86400 * 14
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "SSL certificate expiring within 14 days"
+          description: "Certificate expires in {{ $value | humanizeDuration }}."

@@ -1,0 +1,140 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# monitoring/docker-compose.monitoring.yml
+#
+# Optional observability stack. Run alongside main stack:
+#   docker compose \
+#     -f docker-compose.yml \
+#     -f monitoring/docker-compose.monitoring.yml \
+#     up -d
+#
+# Access:
+#   Grafana:    http://localhost:3000  (admin / see GRAFANA_PASS in .env)
+#   Prometheus: http://localhost:9090  (internal only – SSH tunnel)
+#
+# Note: Bind to 127.0.0.1 in production; access via SSH tunnel.
+# ─────────────────────────────────────────────────────────────────────────────
+
+version: "3.9"
+
+networks:
+  monitoring_net:
+    driver: bridge
+  # Attach to main app network to scrape metrics
+  internal_net:
+    external: true
+    name: dharmasthala_internal_net
+
+volumes:
+  prometheus_data:
+  grafana_data:
+  alertmanager_data:
+
+services:
+
+  # ── Prometheus ───────────────────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: dharmasthala_prometheus
+    restart: unless-stopped
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=30d"
+      - "--web.enable-lifecycle"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "127.0.0.1:9090:9090"    # SSH tunnel: ssh -L 9090:localhost:9090 user@server
+    networks:
+      - monitoring_net
+      - internal_net
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+
+  # ── Grafana ───────────────────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana-oss:11.0.0
+    container_name: dharmasthala_grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASS:-changeme}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_ROOT_URL: "%(protocol)s://%(domain)s/grafana/"
+      GF_LOG_LEVEL: warn
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+    ports:
+      - "127.0.0.1:3001:3000"    # SSH tunnel: ssh -L 3001:localhost:3000 user@server
+    networks:
+      - monitoring_net
+    depends_on:
+      - prometheus
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+
+  # ── Alertmanager ─────────────────────────────────────────────────────────────
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: dharmasthala_alertmanager
+    restart: unless-stopped
+    command:
+      - "--config.file=/etc/alertmanager/alertmanager.yml"
+    volumes:
+      - ./monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+    ports:
+      - "127.0.0.1:9093:9093"
+    networks:
+      - monitoring_net
+
+  # ── Node Exporter (host metrics) ─────────────────────────────────────────────
+  node-exporter:
+    image: prom/node-exporter:v1.8.1
+    container_name: dharmasthala_node_exporter
+    restart: unless-stopped
+    command:
+      - "--path.rootfs=/host"
+      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
+    network_mode: host
+    pid: host
+    volumes:
+      - /:/host:ro,rslave
+    deploy:
+      resources:
+        limits:
+          cpus: "0.1"
+          memory: 64M
+
+  # ── cAdvisor (container metrics) ────────────────────────────────────────────
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    container_name: dharmasthala_cadvisor
+    restart: unless-stopped
+    privileged: true
+    devices:
+      - /dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    ports:
+      - "127.0.0.1:8082:8080"
+    networks:
+      - monitoring_net
+    deploy:
+      resources:
+        limits:
+          cpus: "0.3"
+          memory: 128M
