@@ -1,0 +1,22 @@
+# Core
+fastapi==0.111.0
+uvicorn[standard]==0.30.1
+
+# Database
+motor==3.4.0           # Async MongoDB driver
+pymongo==4.7.2
+certifi==2024.6.2
+
+# Email & integrations
+httpx==0.27.0          # For Mailchimp / SendGrid API calls
+aiosmtplib==3.0.1      # Async SMTP (optional, for background tasks)
+
+# Excel
+openpyxl==3.1.4
+
+# Validation
+pydantic[email]==2.7.4
+python-multipart==0.0.9
+
+# Utilities
+python-dotenv==1.0.1
